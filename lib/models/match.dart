@@ -34,6 +34,17 @@ extension TeamSortMethodExtension on TeamSortMethod {
         return 'Capitães escolhem';
     }
   }
+  
+  String get description {
+    switch (this) {
+      case TeamSortMethod.random:
+        return 'Os jogadores são distribuídos aleatoriamente entre os times, sem considerar o nível de habilidade.';
+      case TeamSortMethod.balanced:
+        return 'Os times são formados buscando o máximo equilíbrio possível entre os níveis de habilidade. O algoritmo realiza múltiplas simulações para encontrar a distribuição com menor variância de habilidade entre os times, respeitando os grupos de jogadores que devem ficar juntos.';
+      case TeamSortMethod.captains:
+        return 'Os capitães de cada time escolhem os jogadores alternadamente.';
+    }
+  }
 }
 
 extension MatchStatusExtension on MatchStatus {

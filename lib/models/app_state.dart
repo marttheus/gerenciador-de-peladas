@@ -50,10 +50,7 @@ class MyAppState extends ChangeNotifier {
   }
 
   Future<void> addPlayer(String name, int weight) async {
-    final id =
-        'player_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-
-    final player = Player(id: id, name: name, weight: weight);
+    final player = Player(name: name, weight: weight);
 
     _players.add(player);
 
@@ -247,7 +244,7 @@ class MyAppState extends ChangeNotifier {
           for (final playerId in playerIds) {
             final player = players.firstWhere(
               (p) => p.id == playerId,
-              orElse: () => Player(id: '', name: '', weight: 0),
+              orElse: () => Player(name: 'Desconhecido', weight: 0),
             );
 
             if (player.id.isNotEmpty) {
@@ -266,7 +263,7 @@ class MyAppState extends ChangeNotifier {
           for (final playerId in playerIds) {
             final player = players.firstWhere(
               (p) => p.id == playerId,
-              orElse: () => Player(id: '', name: '', weight: 0),
+              orElse: () => Player(name: 'Desconhecido', weight: 0),
             );
 
             if (player.id.isNotEmpty && !teamPlayers.contains(player)) {
@@ -492,6 +489,33 @@ class MyAppState extends ChangeNotifier {
     final index = _matches.indexWhere((match) => match.id == matchId);
 
     if (index != -1) {
+      _sortTeams(_matches[index]);
+
+      await _dbHelper.updateMatch(_matches[index]);
+
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateMatchSettings(
+    String matchId, {
+    TeamSortMethod? sortMethod,
+    int? maxPlayersPerTeam,
+    Map<String, List<String>>? preselectedTeams,
+  }) async {
+    final index = _matches.indexWhere((match) => match.id == matchId);
+
+    if (index != -1) {
+      final match = _matches[index];
+
+      final updatedMatch = match.copyWith(
+        sortMethod: sortMethod ?? match.sortMethod,
+        maxPlayersPerTeam: maxPlayersPerTeam ?? match.maxPlayersPerTeam,
+        preselectedTeams: preselectedTeams ?? match.preselectedTeams,
+      );
+
+      _matches[index] = updatedMatch;
+
       _sortTeams(_matches[index]);
 
       await _dbHelper.updateMatch(_matches[index]);

@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 class Player {
   final String id;
 
@@ -5,7 +7,8 @@ class Player {
 
   final int weight;
 
-  Player({required this.id, required this.name, required this.weight});
+  Player({String? id, required this.name, required this.weight})
+      : id = id ?? const Uuid().v7();
 
   Player copyWith({String? id, String? name, int? weight}) {
     return Player(

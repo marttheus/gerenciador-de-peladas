@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/app_state.dart';
 import '../models/player.dart';
 import '../models/match.dart';
+import '../services/team_balancer_service.dart';
 
 class CreateMatchForm extends StatefulWidget {
   final VoidCallback onClose;
@@ -308,6 +309,34 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                       }
                     },
                   ),
+
+                  const SizedBox(height: 8),
+
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _sortMethod.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 16),
 
                   Row(
@@ -581,7 +610,7 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
         return;
       }
 
-      if (!_teamsGenerated && _sortMethod != TeamSortMethod.captains) {
+      if (!_teamsGenerated) {
         _generateTeams();
         return;
       }
@@ -635,19 +664,29 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
 
     final preselectedPlayers = <String>{};
 
+    final usedTeamNames = <String>{};
+
     if (_preselectedTeams.isNotEmpty) {
       int teamIndex = 0;
       _preselectedTeams.forEach((teamId, playerIds) {
         final existingTeamIndex = teams.indexWhere((team) => team.id == teamId);
 
         if (existingTeamIndex == -1) {
-          final teamName = 'Time ${String.fromCharCode(65 + teamIndex)}';
+          String teamName;
+          int nameIndex = teamIndex;
+          do {
+            teamName = 'Time ${String.fromCharCode(65 + nameIndex)}';
+            nameIndex++;
+          } while (usedTeamNames.contains(teamName));
+
+          usedTeamNames.add(teamName);
+
           final teamPlayers = <Player>[];
 
           for (final playerId in playerIds) {
             final player = players.firstWhere(
               (p) => p.id == playerId,
-              orElse: () => Player(id: '', name: '', weight: 0),
+              orElse: () => Player(name: 'Desconhecido', weight: 0),
             );
 
             if (player.id.isNotEmpty) {
@@ -661,12 +700,14 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
           teamIndex++;
         } else {
           final team = teams[existingTeamIndex];
+          usedTeamNames.add(team.name);
+
           final teamPlayers = List<Player>.from(team.players);
 
           for (final playerId in playerIds) {
             final player = players.firstWhere(
               (p) => p.id == playerId,
-              orElse: () => Player(id: '', name: '', weight: 0),
+              orElse: () => Player(name: 'Desconhecido', weight: 0),
             );
 
             if (player.id.isNotEmpty && !teamPlayers.contains(player)) {
@@ -689,8 +730,31 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
         break;
 
       case TeamSortMethod.balanced:
-        preparedPlayers = remainingPlayers;
-        break;
+        final balancedTeams = TeamBalancerService.createBalancedTeams(
+          players: players,
+          numTeams: totalTeams,
+          preselectedTeams: _preselectedTeams,
+        );
+
+        final uniqueBalancedTeams = <Team>[];
+        for (final team in balancedTeams) {
+          String teamName = team.name;
+          int nameIndex = 0;
+
+          while (usedTeamNames.contains(teamName)) {
+            nameIndex++;
+            teamName = 'Time ${String.fromCharCode(65 + nameIndex)}';
+          }
+
+          usedTeamNames.add(teamName);
+          uniqueBalancedTeams.add(team.copyWith(name: teamName));
+        }
+
+        setState(() {
+          _generatedTeams = uniqueBalancedTeams;
+          _teamsGenerated = true;
+        });
+        return;
 
       case TeamSortMethod.captains:
         return;
@@ -703,7 +767,15 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
       final existingTeamIndex = teams.indexWhere((team) => team.id == teamId);
 
       if (existingTeamIndex == -1) {
-        final teamName = 'Time ${String.fromCharCode(65 + i)}';
+        String teamName;
+        int nameIndex = i;
+        do {
+          teamName = 'Time ${String.fromCharCode(65 + nameIndex)}';
+          nameIndex++;
+        } while (usedTeamNames.contains(teamName));
+
+        usedTeamNames.add(teamName);
+
         final teamPlayers = <Player>[];
 
         int playersInThisTeam;
@@ -724,6 +796,8 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
         teams.add(Team(id: teamId, name: teamName, players: teamPlayers));
       } else {
         final team = teams[existingTeamIndex];
+        usedTeamNames.add(team.name);
+
         final teamPlayers = List<Player>.from(team.players);
 
         int playersInThisTeam;
@@ -880,9 +954,19 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
         remainingPlayersCount > 0 ? numFullTeams + 1 : numFullTeams;
 
     if (_generatedTeams.isEmpty) {
+      final usedTeamNames = <String>{};
+
       for (int i = 0; i < totalTeams; i++) {
         final teamId = 'team_${DateTime.now().millisecondsSinceEpoch}_$i';
-        final teamName = 'Time ${String.fromCharCode(65 + i)}';
+
+        String teamName;
+        int nameIndex = i;
+        do {
+          teamName = 'Time ${String.fromCharCode(65 + nameIndex)}';
+          nameIndex++;
+        } while (usedTeamNames.contains(teamName));
+
+        usedTeamNames.add(teamName);
 
         _generatedTeams.add(Team(id: teamId, name: teamName, players: []));
       }
@@ -1242,10 +1326,7 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
 
   void _showTeamSelectionDialog(BuildContext context) {
     final selectedPlayers = <String>[];
-
-    String? selectedTeamId;
-
-    final newTeamId = 'team_${DateTime.now().millisecondsSinceEpoch}';
+    final selectedGroups = <List<String>>[];
 
     showDialog(
       context: context,
@@ -1260,10 +1341,50 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Selecione os jogadores que devem estar no mesmo time:',
+                        'Selecione os jogadores que devem ficar juntos no mesmo time:',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Selecione os jogadores e clique em "Adicionar Grupo" para criar um grupo. '
+                        'Você pode criar vários grupos que ficarão em times diferentes.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
                       const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Jogadores disponíveis:',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (selectedPlayers.isNotEmpty)
+                            Chip(
+                              label: Text(
+                                '${selectedPlayers.length} selecionados',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              padding: EdgeInsets.zero,
+                              labelPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
 
                       Container(
                         height: 300,
@@ -1280,25 +1401,173 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                               player.id,
                             );
 
+                            final isInAnyGroup = selectedGroups.any(
+                              (group) => group.contains(player.id),
+                            );
+
                             return CheckboxListTile(
                               title: Text(player.name),
-                              subtitle: Text('Habilidade: ${player.weight}'),
+                              subtitle: Text(
+                                isInAnyGroup
+                                    ? 'Habilidade: ${player.weight} (já em um grupo)'
+                                    : 'Habilidade: ${player.weight}',
+                              ),
                               value: isSelected,
-                              onChanged: (value) {
-                                setState(() {
-                                  if (value == true) {
-                                    selectedPlayers.add(player.id);
-                                  } else {
-                                    selectedPlayers.remove(player.id);
-                                  }
-                                });
-                              },
+                              onChanged:
+                                  isInAnyGroup
+                                      ? null
+                                      : (value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            selectedPlayers.add(player.id);
+                                          } else {
+                                            selectedPlayers.remove(player.id);
+                                          }
+                                        });
+                                      },
+                              enabled: !isInAnyGroup,
                             );
                           },
                         ),
                       ),
 
+                      const SizedBox(height: 8),
+
+                      if (selectedPlayers.isNotEmpty)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              selectedGroups.add(
+                                List<String>.from(selectedPlayers),
+                              );
+                              selectedPlayers.clear();
+                            });
+                          },
+                          icon: const Icon(Icons.group_add),
+                          label: const Text('Adicionar como Grupo'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 40),
+                          ),
+                        ),
+
                       const SizedBox(height: 16),
+
+                      if (selectedGroups.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Grupos já selecionados:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.green.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Grupos definidos:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        icon: const Icon(
+                                          Icons.clear_all,
+                                          size: 14,
+                                        ),
+                                        label: const Text(
+                                          'Limpar todos',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            selectedGroups.clear();
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ...selectedGroups.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final groupIndex = entry.key;
+                                    final group = entry.value;
+                                    final playerNames = group
+                                        .map((playerId) {
+                                          final player = _selectedPlayers
+                                              .firstWhere(
+                                                (p) => p.id == playerId,
+                                                orElse:
+                                                    () => Player(
+                                                      name: 'Desconhecido',
+                                                      weight: 0,
+                                                    ),
+                                              );
+                                          return player.name;
+                                        })
+                                        .join(', ');
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Grupo ${groupIndex + 1}: $playerNames',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              size: 16,
+                                              color: Colors.red,
+                                            ),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () {
+                                              setState(() {
+                                                selectedGroups.removeAt(
+                                                  groupIndex,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
 
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -1331,51 +1600,13 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                             Text(
                               'O limite máximo de jogadores por time é $_maxPlayersPerTeam. '
                               'Se você selecionar mais jogadores do que o limite, alguns jogadores podem ser '
-                              'colocados em times diferentes.',
+                              'colocados em times diferentes.\n\n'
+                              'Você pode adicionar múltiplos grupos de jogadores que devem ficar juntos.',
                               style: TextStyle(color: Colors.grey.shade700),
                             ),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 16),
-
-                      if (_generatedTeams.isNotEmpty)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Selecione um time existente (opcional):',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              value: selectedTeamId,
-                              decoration: const InputDecoration(
-                                labelText: 'Time',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.group),
-                              ),
-                              items: [
-                                const DropdownMenuItem<String>(
-                                  value: null,
-                                  child: Text('Criar novo time'),
-                                ),
-                                ..._generatedTeams.map((team) {
-                                  return DropdownMenuItem<String>(
-                                    value: team.id,
-                                    child: Text(team.name),
-                                  );
-                                }).toList(),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedTeamId = value;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
                     ],
                   ),
                 ),
@@ -1386,35 +1617,29 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                   ),
                   ElevatedButton(
                     onPressed:
-                        selectedPlayers.isEmpty
+                        (selectedPlayers.isEmpty && selectedGroups.isEmpty)
                             ? null
                             : () {
-                              final teamId = selectedTeamId ?? newTeamId;
-
-                              if (_preselectedTeams.containsKey(teamId)) {
-                                final existingPlayerIds = List<String>.from(
-                                  _preselectedTeams[teamId]!,
-                                );
-                                for (final playerId in selectedPlayers) {
-                                  if (!existingPlayerIds.contains(playerId)) {
-                                    existingPlayerIds.add(playerId);
-                                  }
-                                }
-                                _preselectedTeams[teamId] = existingPlayerIds;
-                              } else {
-                                _preselectedTeams[teamId] = List<String>.from(
-                                  selectedPlayers,
+                              if (selectedPlayers.isNotEmpty) {
+                                selectedGroups.add(
+                                  List<String>.from(selectedPlayers),
                                 );
                               }
 
-                              _generateTeams();
+                              for (final group in selectedGroups) {
+                                final newTeamId =
+                                    'team_${DateTime.now().millisecondsSinceEpoch}_${group.hashCode}';
+                                _preselectedTeams[newTeamId] = group;
+                              }
 
                               Navigator.of(context).pop();
 
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Jogadores selecionados para o mesmo time',
+                                    selectedGroups.length == 1
+                                        ? 'Um grupo de jogadores selecionado para o mesmo time'
+                                        : '${selectedGroups.length} grupos de jogadores selecionados',
                                   ),
                                   backgroundColor: Colors.green,
                                 ),

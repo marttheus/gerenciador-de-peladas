@@ -44,14 +44,13 @@ class _MatchDetailsState extends State<MatchDetails>
     }
   }
 
-  
   void _reloadMatchData() {
     final appState = Provider.of<MyAppState>(context, listen: false);
     final updatedMatch = appState.matches.firstWhere(
       (m) => m.id == widget.match.id,
       orElse: () => widget.match,
     );
-    
+
     setState(() {
       _currentMatch = updatedMatch;
     });
@@ -68,8 +67,7 @@ class _MatchDetailsState extends State<MatchDetails>
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
     final appState = Provider.of<MyAppState>(context, listen: false);
-    
-    
+
     final match = _currentMatch;
 
     return Column(
@@ -231,10 +229,7 @@ class _MatchDetailsState extends State<MatchDetails>
               _buildTeamsTab(),
 
               SingleChildScrollView(
-                child: PaymentManager(
-                  match: match,
-                  showCompleteButton: false,
-                ),
+                child: PaymentManager(match: match, showCompleteButton: false),
               ),
             ],
           ),
@@ -329,9 +324,8 @@ class _MatchDetailsState extends State<MatchDetails>
   }
 
   Widget _buildTeamsTab() {
-    
     final match = _currentMatch;
-    
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,8 +416,7 @@ class _MatchDetailsState extends State<MatchDetails>
 
     final teamIndex = int.tryParse(team.id.split('_').last) ?? 0;
     final color = teamColors[teamIndex % teamColors.length];
-    
-    
+
     final totalSkill = team.players.fold<int>(
       0,
       (sum, player) => sum + player.weight,
@@ -543,47 +536,48 @@ class _MatchDetailsState extends State<MatchDetails>
       (m) => m.id == _currentMatch.id,
       orElse: () => _currentMatch,
     );
-    
+
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
     final buffer = StringBuffer();
 
-    
     buffer.writeln('Data: ${dateFormat.format(updatedMatch.dateTime)}');
-    buffer.writeln('Total de Jogadores: ${updatedMatch.selectedPlayers.length}');
+    buffer.writeln(
+      'Total de Jogadores: ${updatedMatch.selectedPlayers.length}',
+    );
     buffer.writeln('Número de Times: ${updatedMatch.teams.length}');
     buffer.writeln('Valor: R\$ ${updatedMatch.cost.toStringAsFixed(0)}');
-    buffer.writeln('Valor unitário: R\$${updatedMatch.costPerPlayer.toStringAsFixed(0)}');
-    
+    buffer.writeln(
+      'Valor unitário: R\$${updatedMatch.costPerPlayer.toStringAsFixed(0)}',
+    );
+
     if (updatedMatch.pixKey != null && updatedMatch.pixKey!.isNotEmpty) {
       buffer.writeln('Pix: ${updatedMatch.pixKey}');
     }
-    
+
     buffer.writeln('----------------------------------------');
     buffer.writeln();
 
-    
     for (int i = 0; i < updatedMatch.teams.length; i++) {
       final team = updatedMatch.teams[i];
-      
+
       buffer.writeln('Time ${i + 1}');
       buffer.writeln('Jogadores: ${team.players.length}');
-      
+
       for (final player in team.players) {
         buffer.writeln('- ${player.name}');
       }
-      
+
       if (i < updatedMatch.teams.length - 1) {
         buffer.writeln();
       }
     }
 
-    
     if (updatedMatch.unassignedPlayers.isNotEmpty) {
       buffer.writeln();
       buffer.writeln('Jogadores Disponíveis');
       buffer.writeln('Jogadores: ${updatedMatch.unassignedPlayers.length}');
-      
+
       for (final player in updatedMatch.unassignedPlayers) {
         buffer.writeln('- ${player.name}');
       }
@@ -662,18 +656,14 @@ class _MatchDetailsState extends State<MatchDetails>
 
   void _shareToWhatsApp(String text) async {
     try {
-      
       final encodedText = Uri.encodeComponent(text);
-      
-      
-      final whatsappUrl = "whatsapp:
-      
-      
+
+      final whatsappUrl = "whatsapp://send?text=$encodedText";
+
       if (await canLaunchUrlString(whatsappUrl)) {
         await launchUrlString(whatsappUrl);
       } else {
-        
-        final webWhatsappUrl = "https:
+        final webWhatsappUrl = "https://wa.me/?text=$encodedText";
         if (await canLaunchUrlString(webWhatsappUrl)) {
           await launchUrlString(webWhatsappUrl);
         } else {
@@ -855,9 +845,7 @@ class _MatchDetailsState extends State<MatchDetails>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Como você deseja refazer o sorteio dos times?',
-                  ),
+                  const Text('Como você deseja refazer o sorteio dos times?'),
                   const SizedBox(height: 16),
 
                   Container(
@@ -904,11 +892,9 @@ class _MatchDetailsState extends State<MatchDetails>
               ),
               ElevatedButton.icon(
                 onPressed: () async {
-                  
                   await appState.resortTeams(_currentMatch.id);
                   Navigator.of(context).pop();
-                  
-                  
+
                   _reloadMatchData();
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -941,150 +927,157 @@ class _MatchDetailsState extends State<MatchDetails>
           ),
     );
   }
-  
+
   void _showFullResortDialog(BuildContext context) {
     final appState = Provider.of<MyAppState>(context, listen: false);
     final match = _currentMatch;
-    
-    
+
     final selectedPlayers = List<Player>.from(match.selectedPlayers);
     final preselectedTeams = <String, List<String>>{};
     var sortMethod = match.sortMethod;
     var maxPlayersPerTeam = match.maxPlayersPerTeam;
-    
+
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Refazer Sorteio do Zero'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Configure as opções para o novo sorteio:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  
-                  const Text('Método de Sorteio:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<TeamSortMethod>(
-                    value: sortMethod,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: TeamSortMethod.values.map((method) {
-                      return DropdownMenuItem<TeamSortMethod>(
-                        value: method,
-                        child: Text(method.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          sortMethod = value;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  
-                  const Text('Jogadores por Time:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Refazer Sorteio do Zero'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Slider(
-                          value: maxPlayersPerTeam.toDouble(),
-                          min: 3,
-                          max: 11,
-                          divisions: 8,
-                          label: maxPlayersPerTeam.toString(),
-                          onChanged: (value) {
-                            setState(() {
-                              maxPlayersPerTeam = value.round();
-                            });
-                          },
+                      const Text(
+                        'Configure as opções para o novo sorteio:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'Método de Sorteio:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<TeamSortMethod>(
+                        value: sortMethod,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
+                        items:
+                            TeamSortMethod.values.map((method) {
+                              return DropdownMenuItem<TeamSortMethod>(
+                                value: method,
+                                child: Text(method.displayName),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              sortMethod = value;
+                            });
+                          }
+                        },
                       ),
-                      Text(
-                        maxPlayersPerTeam.toString(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'Jogadores por Time:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: maxPlayersPerTeam.toDouble(),
+                              min: 3,
+                              max: 11,
+                              divisions: 8,
+                              label: maxPlayersPerTeam.toString(),
+                              onChanged: (value) {
+                                setState(() {
+                                  maxPlayersPerTeam = value.round();
+                                });
+                              },
+                            ),
+                          ),
+                          Text(
+                            maxPlayersPerTeam.toString(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (sortMethod != TeamSortMethod.captains)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _showTeamSelectionDialogForResort(
+                              context,
+                              selectedPlayers,
+                              preselectedTeams,
+                              sortMethod,
+                              maxPlayersPerTeam,
+                            );
+                          },
+                          icon: const Icon(Icons.group_add),
+                          label: const Text('Selecionar Grupos de Jogadores'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                          ),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  
-                  
-                  if (sortMethod != TeamSortMethod.captains)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showTeamSelectionDialogForResort(
-                          context, 
-                          selectedPlayers, 
-                          preselectedTeams,
-                          sortMethod,
-                          maxPlayersPerTeam,
-                        );
-                      },
-                      icon: const Icon(Icons.group_add),
-                      label: const Text('Selecionar Grupos de Jogadores'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  
-                  await appState.updateMatchSettings(
-                    match.id,
-                    sortMethod: sortMethod,
-                    maxPlayersPerTeam: maxPlayersPerTeam,
-                    preselectedTeams: preselectedTeams,
-                  );
-                  
-                  Navigator.of(context).pop();
-                  
-                  
-                  _reloadMatchData();
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Times sorteados com novas configurações'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
                 ),
-                child: const Text('Refazer Sorteio'),
-              ),
-            ],
-          );
-        },
-      ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await appState.updateMatchSettings(
+                        match.id,
+                        sortMethod: sortMethod,
+                        maxPlayersPerTeam: maxPlayersPerTeam,
+                        preselectedTeams: preselectedTeams,
+                      );
+
+                      Navigator.of(context).pop();
+
+                      _reloadMatchData();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Times sorteados com novas configurações',
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Refazer Sorteio'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
-  
+
   void _showTeamSelectionDialogForResort(
     BuildContext context,
     List<Player> selectedPlayers,
@@ -1097,289 +1090,325 @@ class _MatchDetailsState extends State<MatchDetails>
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Selecionar Grupos de Jogadores'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Selecione os jogadores que devem ficar juntos no mesmo time:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Selecione os jogadores e clique em "Adicionar como Grupo" para criar um grupo. '
-                    'Você pode criar vários grupos que ficarão em times diferentes.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Selecionar Grupos de Jogadores'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Selecione os jogadores que devem ficar juntos no mesmo time:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
-                        'Jogadores disponíveis:',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                        'Selecione os jogadores e clique em "Adicionar como Grupo" para criar um grupo. '
+                        'Você pode criar vários grupos que ficarão em times diferentes.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
                         ),
                       ),
-                      if (selectedPlayerIds.isNotEmpty)
-                        Chip(
-                          label: Text(
-                            '${selectedPlayerIds.length} selecionados',
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Jogadores disponíveis:',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white,
                               fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          padding: EdgeInsets.zero,
-                          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  Container(
-                    height: 300,
-                    width: double.maxFinite,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: ListView.builder(
-                      itemCount: selectedPlayers.length,
-                      itemBuilder: (context, index) {
-                        final player = selectedPlayers[index];
-                        final isSelected = selectedPlayerIds.contains(player.id);
-                        
-                        
-                        final isInAnyGroup = selectedGroups.any((group) => 
-                          group.contains(player.id)
-                        );
-
-                        return CheckboxListTile(
-                          title: Text(player.name),
-                          subtitle: Text(
-                            isInAnyGroup 
-                              ? 'Habilidade: ${player.weight} (já em um grupo)'
-                              : 'Habilidade: ${player.weight}'
-                          ),
-                          value: isSelected,
-                          onChanged: isInAnyGroup 
-                            ? null  
-                            : (value) {
-                                setState(() {
-                                  if (value == true) {
-                                    selectedPlayerIds.add(player.id);
-                                  } else {
-                                    selectedPlayerIds.remove(player.id);
-                                  }
-                                });
-                              },
-                          enabled: !isInAnyGroup,
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-                  
-                  if (selectedPlayerIds.isNotEmpty)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          selectedGroups.add(List<String>.from(selectedPlayerIds));
-                          selectedPlayerIds.clear();
-                        });
-                      },
-                      icon: const Icon(Icons.group_add),
-                      label: const Text('Adicionar como Grupo'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 40),
-                      ),
-                    ),
-
-                  const SizedBox(height: 16),
-                  
-                  if (selectedGroups.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Grupos já selecionados:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Grupos definidos:',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  TextButton.icon(
-                                    icon: const Icon(Icons.clear_all, size: 14),
-                                    label: const Text(
-                                      'Limpar todos',
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: const Size(0, 0),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        selectedGroups.clear();
-                                      });
-                                    },
-                                  ),
-                                ],
+                          if (selectedPlayerIds.isNotEmpty)
+                            Chip(
+                              label: Text(
+                                '${selectedPlayerIds.length} selecionados',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              ...selectedGroups.asMap().entries.map((entry) {
-                                final groupIndex = entry.key;
-                                final group = entry.value;
-                                final playerNames = group.map((playerId) {
-                                  final player = selectedPlayers.firstWhere(
-                                    (p) => p.id == playerId,
-                                    orElse: () => Player(name: 'Desconhecido', weight: 0),
-                                  );
-                                  return player.name;
-                                }).join(', ');
-                                
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Row(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              padding: EdgeInsets.zero,
+                              labelPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      Container(
+                        height: 300,
+                        width: double.maxFinite,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: ListView.builder(
+                          itemCount: selectedPlayers.length,
+                          itemBuilder: (context, index) {
+                            final player = selectedPlayers[index];
+                            final isSelected = selectedPlayerIds.contains(
+                              player.id,
+                            );
+
+                            final isInAnyGroup = selectedGroups.any(
+                              (group) => group.contains(player.id),
+                            );
+
+                            return CheckboxListTile(
+                              title: Text(player.name),
+                              subtitle: Text(
+                                isInAnyGroup
+                                    ? 'Habilidade: ${player.weight} (já em um grupo)'
+                                    : 'Habilidade: ${player.weight}',
+                              ),
+                              value: isSelected,
+                              onChanged:
+                                  isInAnyGroup
+                                      ? null
+                                      : (value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            selectedPlayerIds.add(player.id);
+                                          } else {
+                                            selectedPlayerIds.remove(player.id);
+                                          }
+                                        });
+                                      },
+                              enabled: !isInAnyGroup,
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      if (selectedPlayerIds.isNotEmpty)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              selectedGroups.add(
+                                List<String>.from(selectedPlayerIds),
+                              );
+                              selectedPlayerIds.clear();
+                            });
+                          },
+                          icon: const Icon(Icons.group_add),
+                          label: const Text('Adicionar como Grupo'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 40),
+                          ),
+                        ),
+
+                      const SizedBox(height: 16),
+
+                      if (selectedGroups.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Grupos já selecionados:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.green.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          'Grupo ${groupIndex + 1}: $playerNames',
-                                          style: const TextStyle(fontSize: 12),
+                                      const Text(
+                                        'Grupos definidos:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, size: 16, color: Colors.red),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
+                                      TextButton.icon(
+                                        icon: const Icon(
+                                          Icons.clear_all,
+                                          size: 14,
+                                        ),
+                                        label: const Text(
+                                          'Limpar todos',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
                                         onPressed: () {
                                           setState(() {
-                                            selectedGroups.removeAt(groupIndex);
+                                            selectedGroups.clear();
                                           });
                                         },
                                       ),
                                     ],
                                   ),
-                                );
-                              }).toList(),
-                            ],
+                                  const SizedBox(height: 8),
+                                  ...selectedGroups.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final groupIndex = entry.key;
+                                    final group = entry.value;
+                                    final playerNames = group
+                                        .map((playerId) {
+                                          final player = selectedPlayers
+                                              .firstWhere(
+                                                (p) => p.id == playerId,
+                                                orElse:
+                                                    () => Player(
+                                                      name: 'Desconhecido',
+                                                      weight: 0,
+                                                    ),
+                                              );
+                                          return player.name;
+                                        })
+                                        .join(', ');
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Grupo ${groupIndex + 1}: $playerNames',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              size: 16,
+                                              color: Colors.red,
+                                            ),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () {
+                                              setState(() {
+                                                selectedGroups.removeAt(
+                                                  groupIndex,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.3),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.blue.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Text(
-                                'Informação',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+                            Row(
+                              children: [
+                                const Icon(Icons.info, color: Colors.blue),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Informação',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'O limite máximo de jogadores por time é $maxPlayersPerTeam. '
+                              'Se você selecionar mais jogadores do que o limite, alguns jogadores podem ser '
+                              'colocados em times diferentes.\n\n'
+                              'Você pode adicionar múltiplos grupos de jogadores que devem ficar juntos.',
+                              style: TextStyle(color: Colors.grey.shade700),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'O limite máximo de jogadores por time é $maxPlayersPerTeam. '
-                          'Se você selecionar mais jogadores do que o limite, alguns jogadores podem ser '
-                          'colocados em times diferentes.\n\n'
-                          'Você pode adicionar múltiplos grupos de jogadores que devem ficar juntos.',
-                          style: TextStyle(color: Colors.grey.shade700),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showFullResortDialog(context);
+                    },
+                    child: const Text('Voltar'),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        (selectedPlayerIds.isEmpty && selectedGroups.isEmpty)
+                            ? null
+                            : () {
+                              if (selectedPlayerIds.isNotEmpty) {
+                                selectedGroups.add(
+                                  List<String>.from(selectedPlayerIds),
+                                );
+                              }
+
+                              for (final group in selectedGroups) {
+                                final newTeamId =
+                                    'team_${DateTime.now().millisecondsSinceEpoch}_${group.hashCode}';
+                                preselectedTeams[newTeamId] = group;
+                              }
+
+                              Navigator.of(context).pop();
+
+                              _showFullResortDialog(context);
+                            },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
                     ),
+                    child: const Text('Confirmar Grupos'),
                   ),
                 ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _showFullResortDialog(context);
-                },
-                child: const Text('Voltar'),
-              ),
-              ElevatedButton(
-                onPressed: (selectedPlayerIds.isEmpty && selectedGroups.isEmpty)
-                    ? null
-                    : () {
-                        
-                        if (selectedPlayerIds.isNotEmpty) {
-                          selectedGroups.add(List<String>.from(selectedPlayerIds));
-                        }
-                        
-                        
-                        for (final group in selectedGroups) {
-                          final newTeamId = 'team_${DateTime.now().millisecondsSinceEpoch}_${group.hashCode}';
-                          preselectedTeams[newTeamId] = group;
-                        }
-
-                        Navigator.of(context).pop();
-                        
-                        
-                        _showFullResortDialog(context);
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Confirmar Grupos'),
-              ),
-            ],
-          );
-        },
-      ),
+              );
+            },
+          ),
     );
   }
 }

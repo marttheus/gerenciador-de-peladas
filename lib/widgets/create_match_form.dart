@@ -733,6 +733,7 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
         final balancedTeams = TeamBalancerService.createBalancedTeams(
           players: players,
           numTeams: totalTeams,
+          maxPlayersPerTeam: _maxPlayersPerTeam,
           preselectedTeams: _preselectedTeams,
         );
 

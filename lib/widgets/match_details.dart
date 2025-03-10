@@ -3,14 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'dart:io';
-import 'package:url_launcher/url_launcher_string.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../models/match.dart';
 import '../models/player.dart';
 import '../models/app_state.dart';
 import '../screens/match_screen.dart';
+import '../services/share_service.dart';
 import 'payment_manager.dart';
 
 class MatchDetails extends StatefulWidget {
@@ -639,11 +637,11 @@ class _MatchDetailsState extends State<MatchDetails>
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  _shareToWhatsApp(messageText);
+                  _shareContent(messageText);
                   Navigator.of(context).pop();
                 },
-                icon: const FaIcon(FontAwesomeIcons.whatsapp),
-                label: const Text('WhatsApp'),
+                icon: const Icon(Icons.share),
+                label: const Text('Compartilhar'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
@@ -654,25 +652,8 @@ class _MatchDetailsState extends State<MatchDetails>
     );
   }
 
-  void _shareToWhatsApp(String text) async {
-    try {
-      final encodedText = Uri.encodeComponent(text);
-
-      final whatsappUrl = "whatsapp://send?text=$encodedText";
-
-      if (await canLaunchUrlString(whatsappUrl)) {
-        await launchUrlString(whatsappUrl);
-      } else {
-        final webWhatsappUrl = "https://wa.me/?text=$encodedText";
-        if (await canLaunchUrlString(webWhatsappUrl)) {
-          await launchUrlString(webWhatsappUrl);
-        } else {
-          throw 'Não foi possível abrir o WhatsApp';
-        }
-      }
-    } catch (e) {
-      debugPrint('Erro ao compartilhar no WhatsApp: $e');
-    }
+  void _shareContent(String text) {
+    ShareService.shareText(context, text);
   }
 
   Widget _buildUnassignedPlayers(BuildContext context) {

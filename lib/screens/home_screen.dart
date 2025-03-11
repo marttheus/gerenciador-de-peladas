@@ -367,15 +367,26 @@ class HomeScreen extends StatelessWidget {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 4,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 32),
-              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 12),
               Text(
                 value,
                 style: TextStyle(
@@ -384,7 +395,13 @@ class HomeScreen extends StatelessWidget {
                   color: color,
                 ),
               ),
-              Text(title, style: TextStyle(color: color.withOpacity(0.8))),
+              Text(
+                title, 
+                style: TextStyle(
+                  color: color.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
@@ -397,9 +414,16 @@ class HomeScreen extends StatelessWidget {
     Match match,
     DateFormat dateFormat,
   ) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    
     return Card(
-      elevation: 4,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Provider.of<MyAppState>(context, listen: false).setSelectedIndex(2);
         },
@@ -414,20 +438,52 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 16),
-                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Flexible(
-                          child: Text(
-                            dateFormat.format(match.dateTime),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                dateFormat.format(match.dateTime),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${match.durationMinutes} minutos',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Chip(
-                    label: Text(
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: match.status.color.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
                       match.status.displayName,
                       style: const TextStyle(
                         fontSize: 12,
@@ -435,66 +491,155 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    backgroundColor: match.status.color,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 0,
-                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               Row(
                 children: [
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.attach_money, size: 16),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            'R\$ ${match.cost.toStringAsFixed(2)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            shape: BoxShape.circle,
                           ),
+                          child: const Icon(
+                            Icons.attach_money,
+                            size: 18,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Valor',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              'R\$ ${match.cost.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
+
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.people, size: 16),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            '${match.selectedPlayers.length} jogadores',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            shape: BoxShape.circle,
                           ),
+                          child: const Icon(
+                            Icons.people,
+                            size: 18,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Jogadores',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              '${match.selectedPlayers.length}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Pagamentos: ${match.paidPlayerIds.length}/${match.selectedPlayers.length}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pagamentos: ${match.paidPlayerIds.length}/${match.selectedPlayers.length}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      Text(
+                        '${(match.paymentPercentage * 100).toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: _getProgressColor(match.paymentPercentage),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: match.paymentPercentage,
-                    backgroundColor: Colors.grey.shade300,
-                    color: _getProgressColor(match.paymentPercentage),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: match.paymentPercentage,
+                      backgroundColor: Colors.grey.shade200,
+                      color: _getProgressColor(match.paymentPercentage),
+                      minHeight: 8,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: primaryColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Times: ${match.teams.length}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -510,71 +655,139 @@ class HomeScreen extends StatelessWidget {
     Match match,
     DateFormat dateFormat,
   ) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Provider.of<MyAppState>(context, listen: false).setSelectedIndex(2);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.sports_soccer,
-                    color: Colors.green,
-                    size: 20,
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Provider.of<MyAppState>(context, listen: false).setSelectedIndex(2);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.sports_soccer,
+                      color: Colors.green,
+                      size: 22,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dateFormat.format(match.dateTime),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '${match.teams.length} times',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '${match.selectedPlayers.length} jogadores',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      dateFormat.format(match.dateTime),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      'R\$ ${match.cost.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
-                    Text(
-                      '${match.selectedPlayers.length} jogadores • ${match.teams.length} times',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: match.allPlayersPaid 
+                            ? Colors.green.withOpacity(0.1) 
+                            : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: match.allPlayersPaid 
+                              ? Colors.green.withOpacity(0.3) 
+                              : Colors.orange.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        match.allPlayersPaid ? 'Pago' : 'Pendente',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: match.allPlayersPaid ? Colors.green : Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'R\$ ${match.cost.toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    match.allPlayersPaid ? 'Pago' : 'Pendente',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color:
-                          match.allPlayersPaid ? Colors.green : Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -585,7 +798,10 @@ class HomeScreen extends StatelessWidget {
     int totalPendingPayments = 0;
     double totalPendingAmount = 0;
 
-    for (final match in matches) {
+    // Filtrar apenas partidas não concluídas
+    final activeMatches = matches.where((match) => match.status != MatchStatus.completed).toList();
+
+    for (final match in activeMatches) {
       final pendingPlayers =
           match.selectedPlayers.length - match.paidPlayerIds.length;
       totalPendingPayments += pendingPlayers;
@@ -600,7 +816,10 @@ class HomeScreen extends StatelessWidget {
     }
 
     return Card(
-      elevation: 4,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       color: Colors.orange.shade50,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -609,8 +828,19 @@ class HomeScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.warning, color: Colors.orange),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 const Text(
                   'Pagamentos Pendentes',
                   style: TextStyle(
@@ -621,32 +851,79 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Você tem $totalPendingPayments pagamentos pendentes.',
-              style: TextStyle(color: Colors.grey.shade800),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Valor total pendente: R\$ ${totalPendingAmount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade800,
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pagamentos pendentes:',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '$totalPendingPayments',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Valor total pendente:',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        'R\$ ${totalPendingAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
               onPressed: () {
                 Provider.of<MyAppState>(
                   context,
                   listen: false,
                 ).setSelectedIndex(2);
               },
+              icon: const Icon(Icons.visibility),
+              label: const Text('Ver Detalhes'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text('Ver Detalhes'),
             ),
           ],
         ),
@@ -659,6 +936,8 @@ class HomeScreen extends StatelessWidget {
     List<Player> players,
     List<Match> matches,
   ) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
     final playerParticipation = <String, int>{};
 
     for (final player in players) {
@@ -681,36 +960,75 @@ class HomeScreen extends StatelessWidget {
     final topPlayers = sortedPlayers.take(5).toList();
 
     return Card(
-      elevation: 4,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Jogadores Mais Ativos',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.emoji_events,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Jogadores Mais Frequentes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            ...topPlayers.map((player) {
-              final participation = playerParticipation[player.id] ?? 0;
-              final participationPercentage =
-                  matches.isEmpty ? 0.0 : participation / matches.length;
+            ...topPlayers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final player = entry.value;
+              final participationCount = playerParticipation[player.id] ?? 0;
+              final participationPercentage = matches.isEmpty
+                  ? 0.0
+                  : participationCount / matches.length;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
+                padding: const EdgeInsets.only(bottom: 12.0),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.blue.withOpacity(0.2),
-                      child: Text(
-                        player.name.isNotEmpty
-                            ? player.name[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor.withOpacity(0.7),
+                            primaryColor,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -721,38 +1039,51 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Text(
                             player.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          LinearProgressIndicator(
-                            value: participationPercentage,
-                            backgroundColor: Colors.grey.shade300,
-                            color: Colors.blue,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: participationPercentage,
+                                    backgroundColor: Colors.grey.shade200,
+                                    color: _getPlayerColor(index),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '$participationCount ${participationCount == 1 ? 'partida' : 'partidas'}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$participation partidas',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
                       ),
                     ),
                   ],
                 ),
               );
-            }),
+            }).toList(),
+            
             if (topPlayers.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    'Nenhum jogador participou de partidas ainda',
-                    style: TextStyle(color: Colors.grey),
-                    textAlign: TextAlign.center,
+                    'Nenhuma partida registrada ainda',
+                    style: TextStyle(color: Colors.grey.shade600),
                   ),
                 ),
               ),
@@ -760,6 +1091,18 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  Color _getPlayerColor(int index) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+    ];
+    
+    return colors[index % colors.length];
   }
 
   Color _getProgressColor(double percentage) {

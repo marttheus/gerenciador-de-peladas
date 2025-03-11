@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import '../models/app_state.dart';
 import '../models/match.dart';
@@ -137,7 +138,6 @@ class _PaymentManagerState extends State<PaymentManager> {
               ],
             ),
             const SizedBox(height: 8),
-
             LinearProgressIndicator(
               value: paymentPercentage,
               backgroundColor: Colors.grey.shade200,
@@ -325,7 +325,10 @@ class _PaymentManagerState extends State<PaymentManager> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  appState.updateMatchStatus(match.id, MatchStatus.completed);
+                  appState.updateMatchStatus(
+                    match.id,
+                    MatchStatus.completed,
+                  );
                   Navigator.of(context).pop();
 
                   setState(() {});

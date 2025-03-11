@@ -399,17 +399,21 @@ class _MatchDetailsState extends State<MatchDetails>
   }
 
   Widget _buildTeamCard(BuildContext context, Team team) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final secondaryColor = theme.colorScheme.secondary;
+    
     final List<Color> teamColors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.pink,
-      Colors.indigo,
-      Colors.amber,
-      Colors.cyan,
+      primaryColor,
+      const Color(0xFF388E3C),
+      const Color(0xFF1B5E20),
+      const Color(0xFF558B2F),
+      const Color(0xFF2E7D32),
+      const Color(0xFF00695C),
+      const Color(0xFF004D40),
+      const Color(0xFF33691E),
+      const Color(0xFF827717),
+      const Color(0xFF3E2723),
     ];
 
     final teamIndex = int.tryParse(team.id.split('_').last) ?? 0;

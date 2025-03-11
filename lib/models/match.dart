@@ -64,13 +64,13 @@ extension MatchStatusExtension on MatchStatus {
   Color get color {
     switch (this) {
       case MatchStatus.scheduled:
-        return Colors.orange;
+        return const Color(0xFF558B2F); // Verde oliva (agendada)
       case MatchStatus.inProgress:
-        return Colors.blue;
+        return const Color(0xFF00695C); // Verde azulado (em andamento)
       case MatchStatus.played:
-        return Colors.purple;
+        return const Color(0xFF1B5E20); // Verde escuro (jogada)
       case MatchStatus.completed:
-        return Colors.green;
+        return const Color(0xFF2E7D32); // Verde principal (concluída)
     }
   }
 }

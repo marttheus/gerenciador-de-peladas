@@ -71,6 +71,8 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
   Widget build(BuildContext context) {
     final appState = context.watch<MyAppState>();
     final allPlayers = appState.players;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     if (_manualTeamSelection) {
       return _buildManualTeamSelectionScreen(context, appState);
@@ -83,69 +85,326 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 80),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Criar Nova Partida',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+          Container(
+            color: Colors.white,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Cabeçalho
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Criar Nova Partida',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-
+            
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                            onPressed: widget.onClose,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+            
+                    if (allPlayers.isEmpty)
                       Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          padding: const EdgeInsets.all(8),
-                          constraints: const BoxConstraints(),
-                          onPressed: widget.onClose,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Nenhum jogador disponível',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Você precisa adicionar jogadores antes de criar uma partida.',
+                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                widget.onClose();
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  Provider.of<MyAppState>(
+                                    context,
+                                    listen: false,
+                                  ).setSelectedIndex(1);
+                                });
+                              },
+                              icon: const Icon(Icons.person_add),
+                              label: const Text('Ir para Cadastro de Jogadores'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (allPlayers.isEmpty)
+            
+                    // Data e Hora
+                    InkWell(
+                      onTap: _selectDateTime,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.calendar_today,
+                                color: primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Data e Hora',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _dateFormat.format(_selectedDateTime),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+            
+                    // Custo da Partida
+                    TextFormField(
+                      controller: _costController,
+                      decoration: InputDecoration(
+                        labelText: 'Custo da Partida (R\$)',
+                        hintText: 'Ex: 150.00',
+                        prefixIcon: Icon(Icons.attach_money, color: primaryColor),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d+\.?\d{0,2}'),
+                        ),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor, informe o custo da partida';
+                        }
+            
+                        final cost = double.tryParse(value);
+                        if (cost == null || cost <= 0) {
+                          return 'O custo deve ser um valor positivo';
+                        }
+            
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+            
+                    // Duração da Partida
                     Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withOpacity(0.3)),
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'Nenhum jogador disponível',
-                                  style: TextStyle(
+                          Icon(Icons.timer, color: primaryColor),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Duração da Partida',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          DropdownButton<int>(
+                            value: _durationMinutes,
+                            underline: const SizedBox(),
+                            icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                            onChanged: (value) {
+                              setState(() {
+                                _durationMinutes = value!;
+                              });
+                            },
+                            items: [60, 90, 120, 150, 180].map((duration) {
+                              return DropdownMenuItem<int>(
+                                value: duration,
+                                child: Text(
+                                  '$duration minutos',
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.red,
                                   ),
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Você precisa adicionar jogadores antes de criar uma partida. Feche este formulário e vá para a aba "Jogadores".',
-                                  style: TextStyle(fontSize: 12),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+            
+                    // Chave PIX
+                    TextFormField(
+                      controller: _pixController,
+                      decoration: InputDecoration(
+                        labelText: 'Chave PIX do Recebedor (opcional)',
+                        hintText: 'CPF, e-mail, telefone ou chave aleatória',
+                        prefixIcon: Icon(Icons.pix, color: primaryColor),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+            
+                    // Método de Sorteio
+                    Text(
+                      'Método de Sorteio',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: primaryColor.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<TeamSortMethod>(
+                            value: _sortMethod,
+                            decoration: InputDecoration(
+                              labelText: 'Selecione o método',
+                              prefixIcon: Icon(Icons.shuffle, color: primaryColor),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 16,
+                              ),
+                            ),
+                            items: TeamSortMethod.values.map((method) {
+                              return DropdownMenuItem<TeamSortMethod>(
+                                value: method,
+                                child: Text(method.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _sortMethod = value;
+                                });
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _sortMethod.description,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade800,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -153,302 +412,190 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
                         ],
                       ),
                     ),
-
-                  if (allPlayers.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          widget.onClose();
-
-                          Future.delayed(const Duration(milliseconds: 100), () {
-                            Provider.of<MyAppState>(
-                              context,
-                              listen: false,
-                            ).setSelectedIndex(1);
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
+                    const SizedBox(height: 24),
+            
+                    // Jogadores por Time
+                    Text(
+                      'Jogadores por Time: $_maxPlayersPerTeam',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: primaryColor,
+                        inactiveTrackColor: primaryColor.withOpacity(0.2),
+                        thumbColor: primaryColor,
+                        overlayColor: primaryColor.withOpacity(0.2),
+                        trackHeight: 6,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 8,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.person_add),
-                            SizedBox(width: 8),
-                            Text('Ir para Cadastro de Jogadores'),
-                          ],
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 16,
                         ),
                       ),
-                    ),
-
-                  InkWell(
-                    onTap: _selectDateTime,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Data e Hora',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 16,
-                        ),
-                      ),
-                      child: Text(_dateFormat.format(_selectedDateTime)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _costController,
-                    decoration: const InputDecoration(
-                      labelText: 'Custo da Partida (R\$)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.attach_money),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d+\.?\d{0,2}'),
-                      ),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Por favor, informe o custo da partida';
-                      }
-
-                      final cost = double.tryParse(value);
-                      if (cost == null || cost <= 0) {
-                        return 'O custo deve ser um valor positivo';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Duração da Partida',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.timer),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _durationMinutes,
-                        isExpanded: true,
-                        isDense: true,
-                        icon: const Icon(Icons.arrow_drop_down),
+                      child: Slider(
+                        value: _maxPlayersPerTeam.toDouble(),
+                        min: 3,
+                        max: 11,
+                        divisions: 8,
                         onChanged: (value) {
                           setState(() {
-                            _durationMinutes = value!;
+                            _maxPlayersPerTeam = value.round();
                           });
                         },
-                        items:
-                            [60, 90, 120, 150, 180].map((duration) {
-                              return DropdownMenuItem<int>(
-                                value: duration,
-                                child: Text('$duration minutos'),
-                              );
-                            }).toList(),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _pixController,
-                    decoration: const InputDecoration(
-                      labelText: 'Chave PIX do Recebedor (opcional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.pix),
-                      hintText: 'CPF, e-mail, telefone ou chave aleatória',
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  DropdownButtonFormField<TeamSortMethod>(
-                    value: _sortMethod,
-                    decoration: const InputDecoration(
-                      labelText: 'Método de Sorteio',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.shuffle),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
-                    ),
-                    items:
-                        TeamSortMethod.values.map((method) {
-                          return DropdownMenuItem<TeamSortMethod>(
-                            value: method,
-                            child: Text(method.displayName),
-                          );
-                        }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _sortMethod = value;
-                        });
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 24),
+            
+                    // Seleção de Jogadores
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        Text(
+                          'Selecionar Jogadores',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+            
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Text(
-                            _sortMethod.description,
-                            style: TextStyle(
+                            '${_selectedPlayers.length} selecionados',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                               fontSize: 12,
-                              color: Colors.grey.shade800,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      const Text('Jogadores por Time:'),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Slider(
-                          value: _maxPlayersPerTeam.toDouble(),
-                          min: 3,
-                          max: 11,
-                          divisions: 8,
-                          label: _maxPlayersPerTeam.toString(),
-                          onChanged: (value) {
-                            setState(() {
-                              _maxPlayersPerTeam = value.round();
-                            });
-                          },
-                        ),
+                    const SizedBox(height: 12),
+            
+                    Container(
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        _maxPlayersPerTeam.toString(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Selecionar Jogadores',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      Chip(
-                        label: Text(
-                          '${_selectedPlayers.length} selecionados',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child:
-                        allPlayers.isEmpty
-                            ? const Center(
-                              child: Text('Nenhum jogador cadastrado'),
+                      child: allPlayers.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Nenhum jogador cadastrado',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
                             )
-                            : ListView.builder(
+                          : ListView.builder(
                               itemCount: allPlayers.length,
                               itemBuilder: (context, index) {
                                 final player = allPlayers[index];
-                                final isSelected = _selectedPlayers.contains(
-                                  player,
-                                );
-
-                                return CheckboxListTile(
-                                  title: Text(player.name),
-                                  subtitle: Text(
-                                    'Habilidade: ${player.weight}',
+                                final isSelected = _selectedPlayers.contains(player);
+                                final weightColor = _getWeightColor(player.weight);
+            
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: isSelected 
+                                        ? primaryColor 
+                                        : Colors.grey.shade200,
+                                    child: Text(
+                                      player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : Colors.grey.shade700,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                  value: isSelected,
-                                  onChanged: (value) {
+                                  title: Text(
+                                    player.name,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: weightColor.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: weightColor.withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${player.weight}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: weightColor,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    activeColor: primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          _selectedPlayers.add(player);
+                                        } else {
+                                          _selectedPlayers.remove(player);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  onTap: () {
                                     setState(() {
-                                      if (value == true) {
-                                        _selectedPlayers.add(player);
-                                      } else {
+                                      if (_selectedPlayers.contains(player)) {
                                         _selectedPlayers.remove(player);
+                                      } else {
+                                        _selectedPlayers.add(player);
                                       }
                                     });
                                   },
                                 );
                               },
                             ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (_selectedPlayers.length >= 2 &&
-                      _sortMethod != TeamSortMethod.captains)
+                    ),
+                    const SizedBox(height: 16),
+            
                     ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: (_selectedPlayers.length >= 2 && _sortMethod != TeamSortMethod.captains) ? () {
                         _showTeamSelectionDialog(context);
-                      },
+                      } : null,
                       icon: const Icon(Icons.group_add),
-                      label: const Text(
-                        'Selecionar Jogadores para o Mesmo Time',
-                      ),
+                      label: const Text('Selecionar jogadores para o mesmo time'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        disabledForegroundColor: Colors.grey.shade600,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-
-                  const SizedBox(height: 80),
-                ],
+            
+                    const SizedBox(height: 80),
+                  ],
+                ),
               ),
             ),
           ),
@@ -458,49 +605,36 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
             right: 0,
             bottom: 0,
             child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ElevatedButton(
-                onPressed: _createMatch,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 24,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
                   ),
-                  backgroundColor:
-                      _isFormValid
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.7),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: _isFormValid ? _createMatch : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
-                  elevation: _isFormValid ? 4 : 2,
-                  minimumSize: const Size(double.infinity, 60),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  disabledBackgroundColor: Colors.grey.shade300,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.sports_soccer,
-                      size: 24,
-                      color:
-                          _isFormValid
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.7),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'CRIAR PARTIDA',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            _isFormValid
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  _teamsGenerated
+                      ? 'Finalizar Criação da Partida'
+                      : 'Continuar',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -510,57 +644,14 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
     );
   }
 
-  Widget _buildCostInfo() {
-    final cost = double.tryParse(_costController.text) ?? 0;
-    final costPerPlayer =
-        _selectedPlayers.isEmpty ? 0 : cost / _selectedPlayers.length;
-
-    return Card(
-      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Resumo de Custos:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Custo total:'),
-                Text(
-                  'R\$ ${cost.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Jogadores:'),
-                Text(
-                  '${_selectedPlayers.length}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Valor por jogador:'),
-                Text(
-                  'R\$ ${costPerPlayer.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+  Color _getWeightColor(int weight) {
+    if (weight >= 8) {
+      return const Color(0xFF2E7D32); // Verde escuro
+    } else if (weight >= 5) {
+      return const Color(0xFFEF6C00); // Laranja
+    } else {
+      return const Color(0xFFC62828); // Vermelho
+    }
   }
 
   Future<void> _selectDateTime() async {
@@ -569,12 +660,44 @@ class _CreateMatchFormState extends State<CreateMatchForm> {
       initialDate: _selectedDateTime,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      locale: const Locale('pt', 'BR'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (date != null) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Theme.of(context).colorScheme.primary,
+                onPrimary: Colors.white,
+              ),
+              timePickerTheme: TimePickerThemeData(
+                hourMinuteShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            child: Localizations.override(
+              context: context,
+              locale: const Locale('pt', 'BR'),
+              child: child!,
+            ),
+          );
+        },
       );
 
       if (time != null) {
